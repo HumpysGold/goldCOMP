@@ -15,6 +15,7 @@ contract BaseFixture is Test {
     IERC20 constant COMP = IERC20(0xc00e94Cb662C3520282E6f5717214004A7f26888);
 
     address constant COMP_DEPOSITOR_AGENT = address(4_343_443);
+    address constant GOLD_MSIG = 0x941dcEA21101A385b979286CC6D6A9Bf435EB1C2;
 
     goldCOMP gComp;
 
