@@ -7,6 +7,7 @@ import { SafeERC20 } from "../lib/openzeppelin-contracts/contracts/token/ERC20/u
 import { Ownable } from "../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 
 import { IBravoGovernance } from "./interfaces/IBravoGovernance.sol";
+import {ICOMP} from "./interfaces/ICOMP.sol";
 
 library goldCOMPErrors {
     error InvalidAmount(uint256 amount);
@@ -14,6 +15,7 @@ library goldCOMPErrors {
 
 contract goldCOMP is ERC20, Ownable {
     using SafeERC20 for ERC20;
+    using SafeERC20 for ICOMP;
 
     struct Withdrawal {
         uint256 amount;
@@ -23,7 +25,7 @@ contract goldCOMP is ERC20, Ownable {
     }
 
     ///////////////////////////// Constants ///////////////////////////////
-    ERC20 public constant COMP = ERC20(0xc00e94Cb662C3520282E6f5717214004A7f26888);
+    ICOMP public constant COMP = ICOMP(0xc00e94Cb662C3520282E6f5717214004A7f26888);
     address public constant GOLD_MSIG = 0x941dcEA21101A385b979286CC6D6A9Bf435EB1C2;
 
     IBravoGovernance public constant COMPOUND_GOVERNANCE = IBravoGovernance(0xc0Da02939E1441F497fd74F78cE7Decb17B66529);
@@ -33,13 +35,15 @@ contract goldCOMP is ERC20, Ownable {
     mapping(address => Withdrawal[]) public queuedWithdrawals;
     // COMP counter for total amount of COMP held by contract
     uint256 public totalAssetBalance;
-    uint256 public daysToWait = 7;
+    uint256 public daysToWait = 7 days;
+    address public delegatee = 0x90Bd4645882E865A1d94ab643017bd5EC2AE73be;
 
     /////////////////////////////// Events ////////////////////////////////
     event Deposit(address indexed user, uint256 amount);
     event WithrawalQueued(address indexed user, uint256 amount, uint256 timestamp, uint256 releaseTimestamp);
     event Withdraw(address indexed user, uint256 amount);
     event DaysToWaitSet(uint256 daysToWait);
+    event DelegateeSet(address indexed delegatee);
 
     constructor() ERC20("goldCOMP", "goldCOMP") Ownable(msg.sender) {
         // Transfer ownership to multisig
@@ -62,7 +66,8 @@ contract goldCOMP is ERC20, Ownable {
 
         // Transfer COMP from user to contract
         COMP.safeTransferFrom(msg.sender, address(this), _amount);
-
+        // Delegate COMP voting power to delegatee
+        COMP.delegate(delegatee);
         emit Deposit(msg.sender, _amount);
     }
 
@@ -112,5 +117,12 @@ contract goldCOMP is ERC20, Ownable {
     function setDaysToWait(uint256 _daysToWait) external onlyOwner {
         daysToWait = _daysToWait;
         emit DaysToWaitSet(_daysToWait);
+    }
+
+    /// @notice Change delegatee
+    /// @param _delegatee New delegatee
+    function setDelegatee(address _delegatee) external onlyOwner {
+        delegatee = _delegatee;
+        emit DelegateeSet(_delegatee);
     }
 }
