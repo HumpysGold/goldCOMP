@@ -6,22 +6,28 @@ import { Test } from "forge-std/Test.sol";
 
 import { IERC20 } from "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
+import { ICOMP } from "../src/interfaces/ICOMP.sol";
+import { IBravoGovernance } from "../src/interfaces/IBravoGovernance.sol";
+
 import { goldCOMP } from "../src/goldCOMP.sol";
 
 contract BaseFixture is Test {
     /*//////////////////////////////////////////////////////////////////////////
                                    CONSTANTS
     //////////////////////////////////////////////////////////////////////////*/
-    IERC20 constant COMP = IERC20(0xc00e94Cb662C3520282E6f5717214004A7f26888);
+    ICOMP constant COMP = ICOMP(0xc00e94Cb662C3520282E6f5717214004A7f26888);
+
+    IBravoGovernance public constant COMPOUND_GOVERNANCE = IBravoGovernance(0xc0Da02939E1441F497fd74F78cE7Decb17B66529);
 
     address constant COMP_DEPOSITOR_AGENT = address(4_343_443);
     address constant GOLD_MSIG = 0x941dcEA21101A385b979286CC6D6A9Bf435EB1C2;
+    address constant PROPOSER_GOVERNANCE = 0x9c9dC2110240391d4BEe41203bDFbD19c279B429;
 
     goldCOMP gComp;
 
     function setUp() public {
-        // https://etherscan.io/block/18729433
-        vm.createSelectFork("mainnet", 18_729_433);
+        // https://etherscan.io/block/18716686
+        vm.createSelectFork("mainnet", 18_716_686);
 
         gComp = new goldCOMP();
     }
@@ -87,5 +93,18 @@ contract BaseFixture is Test {
         COMP.approve(address(gComp), amount);
         vm.prank(COMP_DEPOSITOR_AGENT);
         gComp.deposit(amount);
+    }
+
+    function randomGovernanceProposalGenerator(address _target) internal returns (uint256 proposalId) {
+        address[] memory targets = new address[](1);
+        targets[0] = _target;
+        uint256[] memory values = new uint256[](1);
+        string[] memory signatures = new string[](1);
+        bytes[] memory calldatas = new bytes[](1);
+        calldatas[0] =
+            hex"27efe3cb0000000000000000000000009c9dc2110240391d4bee41203bdfbd19c279b429000000000000000000000000000000000000000000000061171e32e0149c0000";
+        string memory description = "random proposal for test";
+        vm.prank(PROPOSER_GOVERNANCE);
+        proposalId = COMPOUND_GOVERNANCE.propose(targets, values, signatures, calldatas, description);
     }
 }

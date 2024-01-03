@@ -6,8 +6,7 @@ import { ERC20 } from "../lib/openzeppelin-contracts/contracts/token/ERC20/ERC20
 import { SafeERC20 } from "../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 import { Ownable } from "../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 
-import { IBravoGovernance } from "./interfaces/IBravoGovernance.sol";
-import {ICOMP} from "./interfaces/ICOMP.sol";
+import { ICOMP } from "./interfaces/ICOMP.sol";
 
 library goldCOMPErrors {
     error InvalidAmount(uint256 amount);
@@ -27,8 +26,6 @@ contract goldCOMP is ERC20, Ownable {
     ///////////////////////////// Constants ///////////////////////////////
     ICOMP public constant COMP = ICOMP(0xc00e94Cb662C3520282E6f5717214004A7f26888);
     address public constant GOLD_MSIG = 0x941dcEA21101A385b979286CC6D6A9Bf435EB1C2;
-
-    IBravoGovernance public constant COMPOUND_GOVERNANCE = IBravoGovernance(0xc0Da02939E1441F497fd74F78cE7Decb17B66529);
 
     /////////////////////////////// Storage ///////////////////////////////
     mapping(address => uint256) public internalAssetBalances;
