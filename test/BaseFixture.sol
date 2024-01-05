@@ -5,7 +5,7 @@ pragma solidity 0.8.20;
 import { Test } from "forge-std/Test.sol";
 
 import { IERC20 } from "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-
+import { console2 } from "../lib/forge-std/src/console2.sol";
 import { ICOMP } from "../src/interfaces/ICOMP.sol";
 import { IBravoGovernance } from "../src/interfaces/IBravoGovernance.sol";
 
@@ -39,11 +39,11 @@ contract BaseFixture is Test {
         assertEq(gComp.totalSupply(), _amount);
         assertEq(gComp.totalAssetBalance(), _amount);
         assertEq(COMP.balanceOf(address(gComp)), _amount);
-        assertEq(gComp.internalAssetBalances(COMP_DEPOSITOR_AGENT), _amount);
     }
 
     function invariant_queueWithdraw(
-        uint256 _prevInternalBalance,
+        uint256 _gCompSupplyBefore,
+        uint256 _gCompBalanceBefore,
         uint256 _queueAmount,
         uint256 _queueIndex
     )
@@ -51,9 +51,8 @@ contract BaseFixture is Test {
     {
         (uint256 queueAmount, uint256 timestamp, uint256 releaseTimestamp, bool withdrawn) =
             gComp.queuedWithdrawals(COMP_DEPOSITOR_AGENT, _queueIndex);
-
-        // assert invariants (internal storage + mapping)
-        assertEq(gComp.internalAssetBalances(COMP_DEPOSITOR_AGENT), _prevInternalBalance - _queueAmount);
+        assertEq(gComp.totalSupply(), _gCompSupplyBefore - _queueAmount);
+        assertEq(gComp.balanceOf(COMP_DEPOSITOR_AGENT), _gCompBalanceBefore - _queueAmount);
         assertEq(queueAmount, _queueAmount);
         assertEq(timestamp, block.timestamp);
         assertEq(releaseTimestamp, block.timestamp + gComp.daysToWait());
@@ -72,8 +71,6 @@ contract BaseFixture is Test {
         (,,, bool withdrawn) = gComp.queuedWithdrawals(COMP_DEPOSITOR_AGENT, _index);
 
         // assert invariants
-        assertEq(gComp.totalSupply(), _gCompSupplyBefore - _withdrawAmount);
-        assertEq(gComp.balanceOf(COMP_DEPOSITOR_AGENT), _gCompBalanceBefore - _withdrawAmount);
         assertEq(COMP.balanceOf(COMP_DEPOSITOR_AGENT), _compBalanceBefore + _withdrawAmount);
         assertTrue(withdrawn);
     }

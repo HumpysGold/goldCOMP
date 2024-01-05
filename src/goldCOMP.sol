@@ -28,7 +28,6 @@ contract goldCOMP is ERC20, Ownable {
     address public constant GOLD_MSIG = 0x941dcEA21101A385b979286CC6D6A9Bf435EB1C2;
 
     /////////////////////////////// Storage ///////////////////////////////
-    mapping(address => uint256) public internalAssetBalances;
     mapping(address => Withdrawal[]) public queuedWithdrawals;
     // COMP counter for total amount of COMP held by contract
     uint256 public totalAssetBalance;
@@ -42,10 +41,8 @@ contract goldCOMP is ERC20, Ownable {
     event DaysToWaitSet(uint256 daysToWait);
     event DelegateeSet(address indexed delegatee);
 
-    constructor() ERC20("goldCOMP", "goldCOMP") Ownable(msg.sender) {
-        // Transfer ownership to multisig
-        transferOwnership(GOLD_MSIG);
-    }
+    // Setup token and transfer ownership to multi immediately
+    constructor() ERC20("goldCOMP", "goldCOMP") Ownable(GOLD_MSIG) { }
 
     /// @notice User deposits COMP and gets goldCOMP in exchange
     /// @param _amount Amount of COMP to deposit
@@ -54,12 +51,10 @@ contract goldCOMP is ERC20, Ownable {
             revert goldCOMPErrors.InvalidAmount(_amount);
         }
 
+        totalAssetBalance += _amount;
+
         // Mint goldCOMP to user
         _mint(msg.sender, _amount);
-
-        // Update internal balances
-        internalAssetBalances[msg.sender] += _amount;
-        totalAssetBalance += _amount;
 
         // Transfer COMP from user to contract
         COMP.safeTransferFrom(msg.sender, address(this), _amount);
@@ -71,15 +66,13 @@ contract goldCOMP is ERC20, Ownable {
     /// @notice When withdrawing, user has to wait daysToWait days and then can withdraw
     /// @param _amount Amount of COMP to withdraw
     function queueWithdraw(uint256 _amount) external {
-        if (_amount == 0) {
+        if (_amount == 0 || _amount > balanceOf(msg.sender)) {
             revert goldCOMPErrors.InvalidAmount(_amount);
         }
-        // Check that user has enough goldCOMP to withdraw
-        if (internalAssetBalances[msg.sender] < _amount) {
-            revert goldCOMPErrors.InvalidAmount(_amount);
-        }
-        // Update internal balances so user can't over-withdraw
-        internalAssetBalances[msg.sender] -= _amount;
+
+        // Burn goldCOMP from user, which ensures they have sufficient balance
+        _burn(msg.sender, _amount);
+
         // Queue withdrawal for user
         queuedWithdrawals[msg.sender].push(Withdrawal(_amount, block.timestamp, block.timestamp + daysToWait, false));
 
@@ -101,8 +94,7 @@ contract goldCOMP is ERC20, Ownable {
         }
         // Update internal balance of COMP:
         totalAssetBalance -= amountToWithdraw;
-        // Burn goldCOMP from user
-        _burn(msg.sender, amountToWithdraw);
+
         // Transfer COMP to user
         COMP.safeTransfer(msg.sender, amountToWithdraw);
         emit Withdraw(msg.sender, amountToWithdraw);

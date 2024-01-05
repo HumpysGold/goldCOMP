@@ -60,13 +60,12 @@ contract goldCOMPTest is BaseFixture {
         invariant_deposit(amount);
 
         // record internal storage
-        uint256 internalBalance = gComp.internalAssetBalances(COMP_DEPOSITOR_AGENT);
-        assertEq(internalBalance, amount);
-
+        uint256 suppplyBefore = gComp.totalSupply();
+        uint256 balanceBefore = gComp.balanceOf(COMP_DEPOSITOR_AGENT);
         vm.prank(COMP_DEPOSITOR_AGENT);
         gComp.queueWithdraw(amount);
 
-        invariant_queueWithdraw(internalBalance, amount, 0);
+        invariant_queueWithdraw(suppplyBefore, balanceBefore, amount, 0);
     }
 
     function testWithdrawQueue_revert() public {
@@ -86,15 +85,12 @@ contract goldCOMPTest is BaseFixture {
         userDeposit(amount);
         invariant_deposit(amount);
 
-        // record internal storage
-        uint256 internalBalance = gComp.internalAssetBalances(COMP_DEPOSITOR_AGENT);
-        assertEq(internalBalance, amount);
-
-        vm.prank(COMP_DEPOSITOR_AGENT);
+        vm.startPrank(COMP_DEPOSITOR_AGENT);
+        uint256 suppplyBefore = gComp.totalSupply();
+        uint256 balanceBefore = gComp.balanceOf(COMP_DEPOSITOR_AGENT);
         gComp.queueWithdraw(amount);
-
-        invariant_queueWithdraw(internalBalance, amount, 0);
-
+        invariant_queueWithdraw(suppplyBefore, balanceBefore, amount, 0);
+        vm.stopPrank();
         skip(gComp.daysToWait());
 
         // snapshots before full wd
