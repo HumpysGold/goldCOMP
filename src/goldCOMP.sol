@@ -10,6 +10,7 @@ import { ICOMP } from "./interfaces/ICOMP.sol";
 
 library goldCOMPErrors {
     error InvalidAmount(uint256 amount);
+    error TooLong(uint256 daysToWait);
 }
 
 contract goldCOMP is ERC20, Ownable {
@@ -29,8 +30,6 @@ contract goldCOMP is ERC20, Ownable {
 
     /////////////////////////////// Storage ///////////////////////////////
     mapping(address => Withdrawal[]) public queuedWithdrawals;
-    // COMP counter for total amount of COMP held by contract
-    uint256 public totalAssetBalance;
     uint256 public daysToWait = 7 days;
     address public delegatee = 0x90Bd4645882E865A1d94ab643017bd5EC2AE73be;
 
@@ -51,8 +50,6 @@ contract goldCOMP is ERC20, Ownable {
             revert goldCOMPErrors.InvalidAmount(_amount);
         }
 
-        totalAssetBalance += _amount;
-
         // Mint goldCOMP to user
         _mint(msg.sender, _amount);
 
@@ -61,6 +58,11 @@ contract goldCOMP is ERC20, Ownable {
         // Delegate COMP voting power to delegatee
         COMP.delegate(delegatee);
         emit Deposit(msg.sender, _amount);
+    }
+
+    /// @notice Delegate COMP voting power to delegatee
+    function manualDelegate() external onlyOwner {
+        COMP.delegate(delegatee);
     }
 
     /// @notice When withdrawing, user has to wait daysToWait days and then can withdraw
@@ -92,8 +94,6 @@ contract goldCOMP is ERC20, Ownable {
                 queuedWithdrawals[msg.sender][i].withdrawn = true;
             }
         }
-        // Update internal balance of COMP:
-        totalAssetBalance -= amountToWithdraw;
 
         // Transfer COMP to user
         COMP.safeTransfer(msg.sender, amountToWithdraw);
@@ -104,8 +104,11 @@ contract goldCOMP is ERC20, Ownable {
     /// @notice Change days to wait before user can withdraw
     /// @param _daysToWait New days to wait
     function setDaysToWait(uint256 _daysToWait) external onlyOwner {
-        daysToWait = _daysToWait;
-        emit DaysToWaitSet(_daysToWait);
+        if (_daysToWait > 30 days) {
+            revert goldCOMPErrors.TooLong(_daysToWait);
+        }
+        daysToWait = _daysToWait * 1 days;
+        emit DaysToWaitSet(_daysToWait * 1 days);
     }
 
     /// @notice Change delegatee

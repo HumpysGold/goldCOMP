@@ -37,7 +37,6 @@ contract BaseFixture is Test {
     function invariant_deposit(uint256 _amount) internal {
         // assert invariants (erc20 storage + internal)
         assertEq(gComp.totalSupply(), _amount);
-        assertEq(gComp.totalAssetBalance(), _amount);
         assertEq(COMP.balanceOf(address(gComp)), _amount);
     }
 

@@ -110,7 +110,7 @@ contract goldCOMPTest is BaseFixture {
         vm.prank(GOLD_MSIG);
         gComp.setDaysToWait(daysToWaitNewVal);
 
-        assertEq(gComp.daysToWait(), daysToWaitNewVal);
+        assertEq(gComp.daysToWait(), daysToWaitNewVal * 1 days);
     }
 
     function testSetDaysWaits_revert() public {
