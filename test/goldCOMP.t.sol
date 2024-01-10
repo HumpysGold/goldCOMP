@@ -105,7 +105,7 @@ contract goldCOMPTest is BaseFixture {
     }
 
     function testSetDaysWaitsHappy() public {
-        uint256 daysToWaitNewVal = 20 days;
+        uint256 daysToWaitNewVal = 20;
 
         vm.prank(GOLD_MSIG);
         gComp.setDaysToWait(daysToWaitNewVal);

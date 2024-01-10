@@ -104,7 +104,7 @@ contract goldCOMP is ERC20, Ownable {
     /// @notice Change days to wait before user can withdraw
     /// @param _daysToWait New days to wait
     function setDaysToWait(uint256 _daysToWait) external onlyOwner {
-        if (_daysToWait > 30 days) {
+        if (_daysToWait > 30) {
             revert goldCOMPErrors.TooLong(_daysToWait);
         }
         daysToWait = _daysToWait * 1 days;
