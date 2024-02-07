@@ -31,7 +31,7 @@ contract goldCOMP is ERC20, Ownable {
     /////////////////////////////// Storage ///////////////////////////////
     mapping(address => Withdrawal[]) public queuedWithdrawals;
     uint256 public daysToWait = 7 days;
-    address public delegatee = 0x90Bd4645882E865A1d94ab643017bd5EC2AE73be;
+    address public delegatee = 0x941dcEA21101A385b979286CC6D6A9Bf435EB1C2;
 
     /////////////////////////////// Events ////////////////////////////////
     event Deposit(address indexed user, uint256 amount);
